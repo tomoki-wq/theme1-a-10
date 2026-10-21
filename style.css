@@ -1,4 +1,5 @@
 /* 登録ボタン */
+#add-button,
 button[type="submit"],
 .register-btn {
     display: inline-block;
@@ -16,11 +17,13 @@ button[type="submit"],
     box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);
 }
 
+#add-button:hover,
 button[type="submit"]:hover,
 .register-btn:hover {
     background-color: #27ae60;
 }
 
+#add-button:active,
 button[type="submit"]:active,
 .register-btn:active {
     transform: scale(0.98);
