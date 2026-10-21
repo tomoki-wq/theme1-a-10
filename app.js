@@ -8,43 +8,116 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // 入力値を取得する関数
-    const getStudentInfo = () => studentInput.value.trim();
+    if (!window.firebase) {
+        console.error('Firebase SDK を読み込んでください。');
+        return;
+    }
 
-    const saveStudentList = (studentList) => {
-        if (!studentList) return;
+    const db = firebase.firestore();
+    const studentsRef = db.collection('students');
 
-        const savedList = JSON.parse(localStorage.getItem('studentList') || '[]');
-        savedList.push(studentList);
-        localStorage.setItem('studentList', JSON.stringify(savedList));
+    const getLocalStudents = () => JSON.parse(localStorage.getItem('studentList') || '[]');
+
+    const saveLocalStudents = (students) => {
+        localStorage.setItem('studentList', JSON.stringify(students));
     };
 
-    const renderStudentList = () => {
-        const savedList = JSON.parse(localStorage.getItem('studentList') || '[]');
+    const renderStudentList = (students) => {
         studentListElement.innerHTML = '';
-
-        savedList.forEach((student) => {
+        students.forEach((student) => {
             const li = document.createElement('li');
             li.textContent = student;
             studentListElement.appendChild(li);
         });
     };
 
-    studentInput.addEventListener('input', () => {
-        const student = getStudentInfo();
-        if (!student) return;
-        console.log('student-input:', student);
+    studentsRef.orderBy('createdAt', 'asc').onSnapshot((snapshot) => {
+        const students = snapshot.docs.map((doc) => doc.data().student);
+        saveLocalStudents(students);
+        renderStudentList(students);
+    }, (error) => {
+        console.error('同期エラー:', error);
+        renderStudentList(getLocalStudents());
     });
 
-    addButton.addEventListener('click', () => {
-        const student = getStudentInfo();
+    addButton.addEventListener('click', async () => {
+        const student = studentInput.value.trim();
         if (!student) return;
 
-        saveStudentList(student);
-        renderStudentList();
-        studentInput.value = '';
-        console.log('送信された学生情報:', student);
+        try {
+            await studentsRef.add({
+                student,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            studentInput.value = '';
+        } catch (error) {
+            console.error('保存に失敗しました:', error);
+
+            const students = getLocalStudents();
+            students.push(student);
+            saveLocalStudents(students);
+            renderStudentList(students);
+        }
     });
 
-    renderStudentList();
+    renderStudentList(getLocalStudents());
+
+    //選択・削除
+    const selectedStudents = new Set();
+
+    let deleteButton = document.getElementById('delete-button');
+    if (!deleteButton) {
+        deleteButton = document.createElement('button');
+        deleteButton.id = 'delete-button';
+        deleteButton.type = 'button';
+        deleteButton.textContent = '削除';
+        studentListElement.insertAdjacentElement('afterend', deleteButton);
+    }
+
+    const syncSelectedState = () => {
+        Array.from(studentListElement.children).forEach((li) => {
+            const studentName = li.textContent.trim();
+            const isSelected = selectedStudents.has(studentName);
+
+            li.classList.toggle('selected', isSelected);
+            li.style.background = isSelected ? '#eaf3ff' : '';
+            li.style.cursor = 'pointer';
+        });
+
+        deleteButton.disabled = selectedStudents.size === 0;
+    };
+
+    deleteButton.addEventListener('click', () => {
+        const remainingStudents = getLocalStudents().filter((student) => !selectedStudents.has(student));
+
+        selectedStudents.clear();
+        saveLocalStudents(remainingStudents);
+        renderStudentList(remainingStudents);
+    });
+
+    studentListElement.addEventListener('click', (event) => {
+        const li = event.target.closest('li');
+        if (!li) return;
+
+        const studentName = li.textContent.trim();
+        if (!studentName) return;
+
+        if (selectedStudents.has(studentName)) {
+            selectedStudents.delete(studentName);
+        } else {
+            selectedStudents.add(studentName);
+        }
+
+        syncSelectedState();
+    });
+
+    const observer = new MutationObserver(() => {
+        syncSelectedState();
+    });
+
+    observer.observe(studentListElement, { childList: true, subtree: true });
+
+    deleteButton.disabled = true;
+    syncSelectedState();
 });
