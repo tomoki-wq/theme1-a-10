@@ -8,14 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    if (!window.firebase) {
-        console.error('Firebase SDK を読み込んでください。');
-        return;
-    }
-
-    const db = firebase.firestore();
-    const studentsRef = db.collection('students');
-
     const getLocalStudents = () => JSON.parse(localStorage.getItem('studentList') || '[]');
 
     const saveLocalStudents = (students) => {
@@ -31,39 +23,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    studentsRef.orderBy('createdAt', 'asc').onSnapshot((snapshot) => {
-        const students = snapshot.docs.map((doc) => doc.data().student);
-        saveLocalStudents(students);
-        renderStudentList(students);
-    }, (error) => {
-        console.error('同期エラー:', error);
-        renderStudentList(getLocalStudents());
-    });
-
-    addButton.addEventListener('click', async () => {
+    addButton.addEventListener('click', () => {
         const student = studentInput.value.trim();
         if (!student) return;
 
-        try {
-            await studentsRef.add({
-                student,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
+        const students = getLocalStudents();
+        students.push(student);
+        saveLocalStudents(students);
+        renderStudentList(students);
 
-            studentInput.value = '';
-        } catch (error) {
-            console.error('保存に失敗しました:', error);
-
-            const students = getLocalStudents();
-            students.push(student);
-            saveLocalStudents(students);
-            renderStudentList(students);
-        }
+        studentInput.value = '';
     });
 
-    renderStudentList(getLocalStudents());
-
-    //選択・削除
+    // 選択・削除
     const selectedStudents = new Set();
 
     let deleteButton = document.getElementById('delete-button');
@@ -94,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedStudents.clear();
         saveLocalStudents(remainingStudents);
         renderStudentList(remainingStudents);
+        syncSelectedState();
     });
 
     studentListElement.addEventListener('click', (event) => {
@@ -118,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     observer.observe(studentListElement, { childList: true, subtree: true });
 
+    renderStudentList(getLocalStudents());
     deleteButton.disabled = true;
     syncSelectedState();
 });
