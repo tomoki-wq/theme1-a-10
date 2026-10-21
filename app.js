@@ -1,26 +1,50 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const studentInput = document.getElementById('studentInput');
+    const studentInput = document.getElementById('student-input');
+    const addButton = document.getElementById('add-button');
+    const studentListElement = document.getElementById('student-list');
 
-    if (!studentInput) {
-        console.error('studentInput が見つかりません。index.html の id を確認してください。');
+    if (!studentInput || !addButton || !studentListElement) {
+        console.error('必要な要素が見つかりません。index.html を確認してください。');
         return;
     }
 
     // 入力値を取得する関数
     const getStudentInfo = () => studentInput.value.trim();
 
-    // 入力中に値を受け取る
+    const saveStudentList = (studentList) => {
+        if (!studentList) return;
+
+        const savedList = JSON.parse(localStorage.getItem('studentList') || '[]');
+        savedList.push(studentList);
+        localStorage.setItem('studentList', JSON.stringify(savedList));
+    };
+
+    const renderStudentList = () => {
+        const savedList = JSON.parse(localStorage.getItem('studentList') || '[]');
+        studentListElement.innerHTML = '';
+
+        savedList.forEach((student) => {
+            const li = document.createElement('li');
+            li.textContent = student;
+            studentListElement.appendChild(li);
+        });
+    };
+
     studentInput.addEventListener('input', () => {
         const student = getStudentInfo();
-        console.log('studentInput:', student);
+        if (!student) return;
+        console.log('student-input:', student);
     });
 
-    // ボタン押下時に値を受け取る
-    const addButton = document.getElementById('addButton');
-    if (addButton) {
-        addButton.addEventListener('click', () => {
-            const studentList = getStudentInfo();;
-            console.log('送信された学生情報:', studentList);
-        });
-    }
+    addButton.addEventListener('click', () => {
+        const student = getStudentInfo();
+        if (!student) return;
+
+        saveStudentList(student);
+        renderStudentList();
+        studentInput.value = '';
+        console.log('送信された学生情報:', student);
+    });
+
+    renderStudentList();
 });
