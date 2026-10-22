@@ -2,19 +2,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const studentInput = document.getElementById('student-input');
     const addButton = document.getElementById('add-button');
     const studentListElement = document.getElementById('student-list');
+    const selectButton = document.getElementById('select-button');
 
     if (!studentInput || !addButton || !studentListElement) {
         console.error('必要な要素が見つかりません。index.html を確認してください。');
         return;
     }
-
-    if (!window.firebase) {
-        console.error('Firebase SDK を読み込んでください。');
-        return;
-    }
-
-    const db = firebase.firestore();
-    const studentsRef = db.collection('students');
 
     const getLocalStudents = () => JSON.parse(localStorage.getItem('studentList') || '[]');
 
@@ -31,39 +24,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    studentsRef.orderBy('createdAt', 'asc').onSnapshot((snapshot) => {
-        const students = snapshot.docs.map((doc) => doc.data().student);
-        saveLocalStudents(students);
-        renderStudentList(students);
-    }, (error) => {
-        console.error('同期エラー:', error);
-        renderStudentList(getLocalStudents());
-    });
-
-    addButton.addEventListener('click', async () => {
+    addButton.addEventListener('click', () => {
         const student = studentInput.value.trim();
         if (!student) return;
 
-        try {
-            await studentsRef.add({
-                student,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            studentInput.value = '';
-        } catch (error) {
-            console.error('保存に失敗しました:', error);
-
-            const students = getLocalStudents();
-            students.push(student);
-            saveLocalStudents(students);
-            renderStudentList(students);
-        }
+        const students = getLocalStudents();
+        students.push(student);
+        saveLocalStudents(students);
+        renderStudentList(students);
+        studentInput.value = '';
     });
 
     renderStudentList(getLocalStudents());
 
-    //選択・削除
+    // 選択・削除
     const selectedStudents = new Set();
     let isSelectionMode = false;
 
@@ -89,23 +63,32 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteButton.disabled = !isSelectionMode || selectedStudents.size === 0;
     };
 
-    selectButton.addEventListener('click', () => {
-        isSelectionMode = !isSelectionMode;
+    if (selectButton) {
+        selectButton.addEventListener('click', () => {
+            isSelectionMode = !isSelectionMode;
 
-        if (!isSelectionMode) {
-            selectedStudents.clear();
-        }
+            if (!isSelectionMode) {
+                selectedStudents.clear();
+            }
 
-        selectButton.textContent = isSelectionMode ? '選択中' : '選択';
-        syncSelectedState();
-    });
+            selectButton.textContent = isSelectionMode ? '選択中' : '選択';
+            syncSelectedState();
+        });
+    }
 
     deleteButton.addEventListener('click', () => {
         if (!isSelectionMode) return;
 
-        const remainingStudents = getLocalStudents().filter((student) => !selectedStudents.has(student));
+        const remainingStudents = getLocalStudents().filter(
+            (student) => !selectedStudents.has(student)
+        );
 
         selectedStudents.clear();
+        isSelectionMode = false;
+
+        if (selectButton) {
+            selectButton.textContent = '選択';
+        }
         saveLocalStudents(remainingStudents);
         renderStudentList(remainingStudents);
         syncSelectedState();
