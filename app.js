@@ -15,78 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('studentList', JSON.stringify(students));
     };
 
-    const selectedStudents = new Set();
-    let isSelectionMode = false;
-
-    let deleteButton = document.getElementById('delete-button');
-    if (!deleteButton) {
-        deleteButton = document.createElement('button');
-        deleteButton.id = 'delete-button';
-        deleteButton.type = 'button';
-        deleteButton.textContent = '削除';
-        studentListElement.insertAdjacentElement('afterend', deleteButton);
-    }
-
-    const syncSelectedState = () => {
-        Array.from(studentListElement.children).forEach((li) => {
-            const checkbox = li.querySelector('input[type="checkbox"]');
-            if (!checkbox) return;
-
-            checkbox.disabled = !isSelectionMode;
-
-            li.style.background = isSelectionMode
-                ? (checkbox.checked ? '#e0efff' : '#ffffff')
-                : '#ffffff';
-
-            li.style.cursor = isSelectionMode ? 'pointer' : 'default';
-        });
-
-        deleteButton.disabled = !isSelectionMode || selectedStudents.size === 0;
-    };
-
-    const toggleStudentSelection = (studentName, isChecked) => {
-        if (isChecked) {
-            selectedStudents.add(studentName);
-        } else {
-            selectedStudents.delete(studentName);
-        }
-
-        const checkbox = Array.from(studentListElement.children).find((li) => {
-            const label = li.querySelector('span');
-            return label && label.textContent.trim() === studentName;
-        })?.querySelector('input[type="checkbox"]');
-
-        if (checkbox) {
-            checkbox.checked = isChecked;
-        }
-
-        syncSelectedState();
-    };
-
     const renderStudentList = (students) => {
         studentListElement.innerHTML = '';
-
         students.forEach((student) => {
             const li = document.createElement('li');
-
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.checked = selectedStudents.has(student);
-            checkbox.disabled = !isSelectionMode;
-
-            checkbox.addEventListener('change', () => {
-                toggleStudentSelection(student, checkbox.checked);
-            });
-
-            const label = document.createElement('span');
-            label.textContent = student;
-
-            li.appendChild(checkbox);
-            li.appendChild(label);
+            li.textContent = student;
             studentListElement.appendChild(li);
         });
-
-        syncSelectedState();
     };
 
     addButton.addEventListener('click', () => {
@@ -102,6 +37,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderStudentList(getLocalStudents());
 
+    // 選択・削除
+    const selectedStudents = new Set();
+    let isSelectionMode = false;
+
+    let deleteButton = document.getElementById('delete-button');
+    if (!deleteButton) {
+        deleteButton = document.createElement('button');
+        deleteButton.id = 'delete-button';
+        deleteButton.type = 'button';
+        deleteButton.textContent = '削除';
+        studentListElement.insertAdjacentElement('afterend', deleteButton);
+    }
+
+    const syncSelectedState = () => {
+        Array.from(studentListElement.children).forEach((li) => {
+            const studentName = li.textContent.trim();
+            const isSelected = selectedStudents.has(studentName);
+
+            li.classList.toggle('selected', isSelected);
+
+            if (isSelectionMode) {
+                li.style.background = isSelected ? '#b2c1d6' : '#d3ddf3'; // ON時の色
+                li.style.borderLeft = isSelected ? '4px solid #2563eb' : '4px solid transparent';
+            } else {
+                li.style.background = '#ffffff'; // OFF時の色
+                li.style.borderLeft = '4px solid transparent';
+            }
+            li.style.cursor = isSelectionMode ? 'pointer' : 'default';
+        });
+
+        deleteButton.disabled = !isSelectionMode || selectedStudents.size === 0;
+    };
+
     if (selectButton) {
         selectButton.addEventListener('click', () => {
             isSelectionMode = !isSelectionMode;
@@ -111,26 +79,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             selectButton.textContent = isSelectionMode ? '選択中' : '選択';
-            renderStudentList(getLocalStudents());
+            syncSelectedState();
         });
     }
-    studentListElement.addEventListener('click', (event) => {
-        if (!isSelectionMode) return;
 
-        const checkbox = event.target.closest('input[type="checkbox"]');
-        if (checkbox) return;
-
-        const li = event.target.closest('li');
-        if (!li) return;
-
-        const label = li.querySelector('span');
-        if (!label) return;
-
-        const studentName = label.textContent.trim();
-        if (!studentName) return;
-
-        toggleStudentSelection(studentName, !selectedStudents.has(studentName));
-    });
     deleteButton.addEventListener('click', () => {
         if (!isSelectionMode) return;
 
@@ -140,12 +92,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
         selectedStudents.clear();
         isSelectionMode = false;
+
         if (selectButton) {
             selectButton.textContent = '選択';
         }
-
         saveLocalStudents(remainingStudents);
         renderStudentList(remainingStudents);
+        syncSelectedState();
+    });
+
+    studentListElement.addEventListener('click', (event) => {
+        if (!isSelectionMode) return;
+
+        const li = event.target.closest('li');
+        if (!li) return;
+
+        const studentName = li.textContent.trim();
+        if (!studentName) return;
+
+        if (selectedStudents.has(studentName)) {
+            selectedStudents.delete(studentName);
+        } else {
+            selectedStudents.add(studentName);
+        }
+
+        syncSelectedState();
     });
 
     const observer = new MutationObserver(() => {
