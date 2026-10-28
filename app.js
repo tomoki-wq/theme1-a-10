@@ -32,7 +32,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const checkbox = li.querySelector('input[type="checkbox"]');
             if (!checkbox) return;
 
-            checkbox.disabled = !isSelectionMode;
+            const visible = isSelectionMode;
+
+            checkbox.disabled = !visible;
+            checkbox.style.display = visible ? 'inline-block' : 'none';
+            checkbox.style.visibility = visible ? 'visible' : 'hidden';
 
             li.style.background = isSelectionMode
                 ? (checkbox.checked ? '#e0efff' : '#ffffff')
