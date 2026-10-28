@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const addButton = document.getElementById('add-button');
     const studentListElement = document.getElementById('student-list');
     const selectButton = document.getElementById('select-button');
+    const attendancePageButton = document.getElementById('attendance-page-button');
 
     if (!studentInput || !addButton || !studentListElement) {
         console.error('必要な要素が見つかりません。index.html を確認してください。');
@@ -14,6 +15,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveLocalStudents = (students) => {
         localStorage.setItem('studentList', JSON.stringify(students));
     };
+
+    if (attendancePageButton) {
+        attendancePageButton.addEventListener('click', () => {
+            window.location.href = 'attendance.html';
+        });
+    }
 
     const selectedStudents = new Set();
     let isSelectionMode = false;
