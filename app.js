@@ -56,7 +56,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const isSelected = selectedStudents.has(studentName);
 
             li.classList.toggle('selected', isSelected);
-            li.style.background = isSelected ? '#eaf3ff' : '';
+
+            if (isSelectionMode) {
+                li.style.background = isSelected ? '#b2c1d6' : '#d3ddf3'; // ON時の色
+                li.style.borderLeft = isSelected ? '4px solid #2563eb' : '4px solid transparent';
+            } else {
+                li.style.background = '#ffffff'; // OFF時の色
+                li.style.borderLeft = '4px solid transparent';
+            }
             li.style.cursor = isSelectionMode ? 'pointer' : 'default';
         });
 
