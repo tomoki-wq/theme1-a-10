@@ -3,14 +3,56 @@ document.addEventListener('DOMContentLoaded', () => {
     const addButton = document.getElementById('add-button');
     const studentListElement = document.getElementById('student-list');
     const selectButton = document.getElementById('select-button');
-    const attendancePageButton = document.getElementById('attendance-page-button');
+    const attendancePageButton = document.getElementById('attend-button');
+    const normalizeStudents = (students) => students.map((student) => (
+        Array.isArray(student) ? [student[0], student[1] ?? null] : [student, null]
+    ));
 
     if (!studentInput || !addButton || !studentListElement) {
-        console.error('必要な要素が見つかりません。index.html を確認してください。');
+        const attendanceListElement = document.getElementById('attendance-list');
+        if (attendanceListElement) {
+            const students = normalizeStudents(JSON.parse(localStorage.getItem('studentList') || '[]'));
+            localStorage.setItem('studentList', JSON.stringify(students));
+            attendanceListElement.innerHTML = '';
+            students.forEach(([studentName, attendanceStatus], index) => {
+                const li = document.createElement('li');
+                const name = document.createElement('span');
+                name.textContent = studentName;
+
+                const options = document.createElement('div');
+                options.className = 'attendance-options';
+
+                ['出席', '遅刻', '欠席'].forEach((status) => {
+                    const label = document.createElement('label');
+                    const radio = document.createElement('input');
+                    radio.type = 'radio';
+                    radio.name = `attendance-status-${index}`;
+                    radio.value = status;
+                    radio.checked = attendanceStatus === status;
+                    radio.addEventListener('change', () => {
+                        students[index][1] = status;
+                        localStorage.setItem('studentList', JSON.stringify(students));
+                    });
+
+                    label.append(radio, document.createTextNode(status));
+                    options.appendChild(label);
+                });
+
+                li.append(name, options);
+                attendanceListElement.appendChild(li);
+            });
+        }
+        if (!attendanceListElement) {
+            console.error('必要な要素が見つかりません。index.html を確認してください。');
+        }
         return;
     }
 
-    const getLocalStudents = () => JSON.parse(localStorage.getItem('studentList') || '[]');
+    const getLocalStudents = () => {
+        const students = normalizeStudents(JSON.parse(localStorage.getItem('studentList') || '[]'));
+        localStorage.setItem('studentList', JSON.stringify(students));
+        return students;
+    };
 
     const saveLocalStudents = (students) => {
         localStorage.setItem('studentList', JSON.stringify(students));
@@ -77,20 +119,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderStudentList = (students) => {
         studentListElement.innerHTML = '';
 
-        students.forEach((student) => {
+        students.forEach(([studentName, attendanceStatus]) => {
             const li = document.createElement('li');
 
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
-            checkbox.checked = selectedStudents.has(student);
+            checkbox.checked = selectedStudents.has(studentName);
             checkbox.disabled = !isSelectionMode;
 
             checkbox.addEventListener('change', () => {
-                toggleStudentSelection(student, checkbox.checked);
+                toggleStudentSelection(studentName, checkbox.checked);
             });
 
             const label = document.createElement('span');
-            label.textContent = student;
+            label.textContent = studentName;
 
             li.appendChild(checkbox);
             li.appendChild(label);
@@ -105,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!student) return;
 
         const students = getLocalStudents();
-        students.push(student);
+        students.push([student, '未設定']);
         saveLocalStudents(students);
         renderStudentList(students);
         studentInput.value = '';
@@ -146,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isSelectionMode) return;
 
         const remainingStudents = getLocalStudents().filter(
-            (student) => !selectedStudents.has(student)
+            ([studentName]) => !selectedStudents.has(studentName)
         );
 
         selectedStudents.clear();
