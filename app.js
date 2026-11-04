@@ -79,6 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteButton.id = 'delete-button';
         deleteButton.type = 'button';
         deleteButton.textContent = '削除';
+        deleteButton.style.display = 'none';
         studentListElement.insertAdjacentElement('afterend', deleteButton);
     }
 
@@ -100,6 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
             li.style.cursor = isSelectionMode ? 'pointer' : 'default';
         });
 
+        deleteButton.style.display = isSelectionMode ? 'inline-block' : 'none';
         deleteButton.disabled = !isSelectionMode || selectedStudents.size === 0;
     };
 
@@ -191,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleStudentSelection(studentName, !selectedStudents.has(studentName));
     });
     deleteButton.addEventListener('click', () => {
-        if (!isSelectionMode) return;
+        if (!isSelectionMode || selectedStudents.size === 0) return;
 
         const remainingStudents = getLocalStudents().filter(
             ([studentName]) => !selectedStudents.has(studentName)
@@ -205,6 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         saveLocalStudents(remainingStudents);
         renderStudentList(remainingStudents);
+        syncSelectedState();
     });
 
     const observer = new MutationObserver(() => {
