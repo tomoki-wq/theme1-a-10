@@ -7,11 +7,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const normalizeStudents = (students) => students.map((student) => (
         Array.isArray(student) ? [student[0], student[1] ?? null] : [student, null]
     ));
-
+    const returnPageButton = document.getElementById('return-button');
+    
     if (!studentInput || !addButton || !studentListElement) {
         const attendanceListElement = document.getElementById('attendance-list');
         if (attendanceListElement) {
             const students = normalizeStudents(JSON.parse(localStorage.getItem('studentList') || '[]'));
+            if (returnPageButton) {
+                returnPageButton.addEventListener('click', () => {
+                    window.location.href = 'index.html';
+                });
+            }
             localStorage.setItem('studentList', JSON.stringify(students));
             attendanceListElement.innerHTML = '';
             students.forEach(([studentName, attendanceStatus], index) => {
