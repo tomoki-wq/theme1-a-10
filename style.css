@@ -158,6 +158,8 @@ button[type="submit"]:active,
 
 .action-buttons {
     display: flex;
+    flex-direction: column;
+    align-items: flex-start;
     gap: 12px;
     margin-top: 16px;
 }
@@ -188,14 +190,54 @@ button[type="submit"]:active,
 }
 
 .attend-button {
-    background-color: #3498db;
-    box-shadow: 0 4px 10px rgba(52, 152, 219, 0.25);
+    display: inline-block;
+    min-width: 180px;
+    min-height: 52px;
+    padding: 14px 28px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #fff;
+    background-color: #2ecc71;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);
 }
 
 .attend-button:hover {
+    background-color: #27ae60;
+}
+
+.attend-button:active,
+.delete-button:active,
+.action-button:active {
+    transform: scale(0.98);
+}
+
+#return-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 180px;
+    min-height: 52px;
+    padding: 14px 28px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #fff;
+    background-color: #3498db;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    box-shadow: 0 4px 10px rgba(52, 152, 219, 0.25);
+    margin-top: 16px;
+}
+
+#return-button:hover {
     background-color: #2980b9;
 }
 
-.action-button:active {
+#return-button:active {
     transform: scale(0.98);
 }
