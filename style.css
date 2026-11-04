@@ -190,23 +190,27 @@ button[type="submit"]:active,
 }
 
 .attend-button {
-    display: inline-block;
-    min-width: 180px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 420px;
+    min-width: 420px;
     min-height: 52px;
     padding: 14px 28px;
     font-size: 1.1rem;
     font-weight: bold;
     color: #fff;
-    background-color: #2ecc71;
+    background-color: #7f8c8d;
     border: none;
     border-radius: 10px;
     cursor: pointer;
     transition: background-color 0.2s ease, transform 0.1s ease;
-    box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);
+    box-shadow: 0 4px 10px rgba(127, 140, 141, 0.25);
+    margin-top: 20px;
 }
 
 .attend-button:hover {
-    background-color: #27ae60;
+    background-color: #6c7a7d;
 }
 
 .attend-button:active,
